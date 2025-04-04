@@ -182,8 +182,8 @@ void move_right(struct game_state *state) {
 // Alternate serialize and deserialize implementation using only 45 bits (half as fast though)
 // static const uint64_t translator[16] = {1, 1, 2, 6, 24, 120, 720, 5040, 40320, 362880, 3628800, 39916800, 479001600, 6227020800, 87178291200, 1307674368000};
 
-// static void pop(int arr[16], int idx)
-// {
+//  static void pop(int arr[16], int idx)
+//{
 //   for (int i = idx; i < 15; i++)
 //   {
 //     arr[i] ^= arr[i + 1];
@@ -199,14 +199,14 @@ void move_right(struct game_state *state) {
 //     if (arr[i] == val)
 //       return i;
 //   }
-
+//
 //   return 16;
 // }
 
 // uint64_t serialize(struct game_state state)
 // {
 //   uint64_t ret = 0;
-//   int arr[16] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+//  int arr[16] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
 //   for (int i = 0; i < 16; i++)
 //   {
 //     int num = state.tiles[i / 4][i % 4];
@@ -214,7 +214,7 @@ void move_right(struct game_state *state) {
 //     ret += idx * translator[16 - i - 1];
 //     pop(arr, idx);
 //   }
-
+//
 //   return ret + ((uint64_t)state.num_steps << 45);
 // }
 
@@ -222,31 +222,31 @@ void move_right(struct game_state *state) {
 // {
 //   int arr[16] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
 //   struct game_state ret = {.num_steps = (state & (((1UL << 19) - 1) << 45)) >> 45};
-//   int x = 0, y = 0;
+//  int x = 0, y = 0;
 //   state &= (1UL << 45) - 1;
-
+//
 //   for (int i = 15; i >= 0; i--)
 //   {
 //     uint64_t div = translator[i];
 //     int idx = state / div;
 //     ret.tiles[y][x] = arr[idx];
-
+//
 //     if (!arr[idx])
 //     {
 //       ret.empty_col = x;
 //       ret.empty_row = y;
 //     }
-
+//
 //     x++;
 //     if (x == 4)
 //     {
 //       y++;
 //       x = 0;
 //     }
-
+//
 //     pop(arr, idx);
 //     state %= div;
 //   }
-
+//
 //   return ret;
-// }
+// }*/
