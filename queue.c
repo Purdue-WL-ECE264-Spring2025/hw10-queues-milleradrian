@@ -1,6 +1,7 @@
 #include "queue.h"
 #include "tile_game.h"
 #include <stdlib.h>
+#include <string.h>
 #include <stdbool.h>
 
 //adds game state to back of queue
@@ -13,115 +14,98 @@ void enqueue(struct queue *q, struct game_state state)
 //removes game state from the front of the queue
 struct game_state dequeue(struct queue *q) 
 {
+    if (!q->data.head) 
+    {
+        struct game_state empty_state = {0};
+        return empty_state;
+    }
     size_t encoded = remove_from_head(&q->data);
     return deserialize(encoded);
 }
 
-//returns true if puzzle in solved state
-bool is_solved(struct game_state state) 
+//return min number of moves
+int number_of_moves(struct game_state start) 
 {
-    uint8_t expected_tile = 1;
-    for (int r = 0; r < 4; ++r) 
+    //initialize queue
+    struct queue q = {{NULL}};
+
+    //allocate visited state
+    #define MAX_VISITED 1000000
+    static uint64_t visited[MAX_VISITED];
+    static size_t visited_count = 0;
+    memset(visited, 0, sizeof(visited));
+    visited_count = 0;
+
+    enqueue(&q, start);
+    visited[visited_count++] = serialize(start);
+
+    //breadth-first search loop
+    while (q.data.head != NULL) 
     {
-        for (int c = 0; c < 4; ++c) 
+        struct game_state current = dequeue(&q);
+
+        //quick check solution state
+        static const uint8_t target[4][4] = {
+            {1, 2, 3, 4},
+            {5, 6, 7, 8},
+            {9, 10, 11, 12},
+            {13, 14, 15, 0}
+        };
+        if (memcmp(current.tiles, target, sizeof(target)) == 0) 
         {
-            if (r == 3 && c == 3) 
+            free_list(q.data);  //cleanup queue memory
+            return current.num_steps;
+        }
+
+        //explore next possible moves
+        struct game_state neighbors[4];
+        int count = 0;
+
+        struct game_state next = current;
+        move_up(&next);
+        if (memcmp(next.tiles, current.tiles, sizeof(next.tiles)) != 0)
+            neighbors[count++] = next;
+
+        next = current;
+        move_down(&next);
+        if (memcmp(next.tiles, current.tiles, sizeof(next.tiles)) != 0)
+            neighbors[count++] = next;
+
+        next = current;
+        move_left(&next);
+        if (memcmp(next.tiles, current.tiles, sizeof(next.tiles)) != 0)
+            neighbors[count++] = next;
+
+        next = current;
+        move_right(&next);
+        if (memcmp(next.tiles, current.tiles, sizeof(next.tiles)) != 0)
+            neighbors[count++] = next;
+
+        //check and enqueue unvisited states
+        for (int i = 0; i < count; i++) 
+        {
+            uint64_t key = serialize(neighbors[i]);
+            bool seen_before = false;
+
+            for (size_t j = 0; j < visited_count; j++) 
             {
-                if (state.tiles[r][c] != 0) 
+                if (visited[j] == key) 
                 {
-                    return false;
+                    seen_before = true;
+                    break;
                 }
-            } else if (state.tiles[r][c] != expected_tile++) 
+            }
+
+            if (!seen_before && visited_count < MAX_VISITED) 
             {
-                return false;
+                enqueue(&q, neighbors[i]);
+                visited[visited_count++] = key;
             }
         }
     }
-    return true;
-}
 
-//makes all valid next moves from current state
-int next_states_from_state(struct game_state state, struct game_state out_states[4]) 
-{
-int generated = 0;
-
-    //try moving the empty tile up
-    if (state.empty_row > 0) 
-    {
-        out_states[generated] = state;
-        move_up(&out_states[generated]);
-        out_states[generated].num_steps++;
-        generated++;
-    }
-
-    //try moving down
-    if (state.empty_row < 3) 
-    {
-        out_states[generated] = state;
-        move_down(&out_states[generated]);
-        out_states[generated].num_steps++;
-        generated++;
-    }
-
-    //try moving left
-    if (state.empty_col > 0) 
-    {
-        out_states[generated] = state;
-        move_left(&out_states[generated]);
-        out_states[generated].num_steps++;
-        generated++;
-    }
-
-    //try moving right
-    if (state.empty_col < 3) 
-    {
-        out_states[generated] = state;
-        move_right(&out_states[generated]);
-        out_states[generated].num_steps++;
-        generated++;
-    }
-    return generated;
-}
-
-//returns the minimum number of moves
-int number_of_moves(struct game_state start) 
-{
-    struct queue q = {0};
-    enqueue(&q, start);
-
-    //allocate visited array 
-    bool *visited = calloc(1 << 24, sizeof(bool));
-    if (!visited) 
-    {
-        fprintf(stderr, "Memory allocation failed.\n");
-        return -1;
-    }
-
-    while (q.data.head) 
-    {
-        struct game_state current = dequeue(&q);
-        size_t hash = serialize(current);
-        size_t index = hash % (1 << 24);
-        if (visited[index]) 
-        {
-            continue;
-        }
-        visited[index] = true;
-
-        if (is_solved(current)) 
-        {
-            free_list(q.data);
-            free(visited);
-            return current.num_steps;
-        }
-        struct game_state next_states[4];
-        int total = next_states_from_state(current, next_states);
-        for (int i = 0; i < total; ++i) 
-        {
-            enqueue(&q, next_states[i]);
-        }
-    }
+    //if no solution
     free_list(q.data);
-    free(visited);
     return -1;
 }
+
