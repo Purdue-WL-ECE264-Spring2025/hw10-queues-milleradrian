@@ -34,13 +34,13 @@ void insert_at_tail(struct linked_list *list, size_t value)
     return;
   }
 
-  if (list->head) 
+  if (!list->head) 
   {
     list->head = node;
     return;
   }
   struct list_node *cur = list->head;
-  while (cur->next != NULL) 
+  while (cur->next) 
   {
     cur = cur->next;
   }
@@ -50,7 +50,7 @@ void insert_at_tail(struct linked_list *list, size_t value)
 // removes head node and returns value
 size_t remove_from_head(struct linked_list *list) 
 {
-  if (list == NULL || list->head == NULL) 
+  if (!list->head) 
   {
   // if nothing to remove, just return 0
   return 0;
@@ -66,29 +66,29 @@ size_t remove_from_head(struct linked_list *list)
 // removes last node and returns value
 size_t remove_from_tail(struct linked_list *list) 
 {
-  if (!list || !list->head)
+  if (!list->head)
   {
     return 0;
   }
-
-  if (list->head->next == NULL) 
-  {
-    size_t val = list->head->value;
-    free(list->head);
-    list->head = NULL;
-    return val;
-  }
   struct list_node *cur = list->head;
+  struct list_node *prev = NULL;
 
   // go until second to last node
-  while (cur->next && cur->next->next) 
+  while (cur->next) 
   {
-  cur = cur->next;
+    prev = cur;
+    cur = cur->next;
   }
-  size_t val = cur->next->value;
-  free(cur->next);
-  cur->next = NULL;
-
+  size_t val = cur->value;
+  free(cur);
+  if (prev) 
+  {
+    cur->next = NULL;
+  }
+  else 
+  {
+    list->head = NULL;
+  }
   return val;
 }
 
