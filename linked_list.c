@@ -4,14 +4,12 @@
 // creates new node with given value
 struct list_node *new_node(size_t value) 
 {
-  struct list_node *node = malloc(sizeof(struct list_node));
-  if (node == NULL) 
+  struct list_node *node = (struct list_node *)malloc(sizeof(struct list_node));
+  if (node) 
   {
-    fprintf(stderr, "couldn't allocate memory for new node\n");
-    return NULL;
+    node->value = value;
+    node->next = NULL;
   }
-  node->value = value;
-  node->next = NULL;
   return node;
 }
 
@@ -36,7 +34,7 @@ void insert_at_tail(struct linked_list *list, size_t value)
     return;
   }
 
-  if (list->head == NULL) 
+  if (list->head) 
   {
     list->head = node;
     return;
